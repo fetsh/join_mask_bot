@@ -1,0 +1,25 @@
+# /etc/systemd/system/joinmask.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable joinmask
+# sudo systemctl start  joinmask
+
+[Unit]
+Description=Joinmask Puma Service
+After=network.target
+
+[Service]
+Type=simple
+User=smo3
+EnvironmentFile=/var/www/joinmask/shared/.env
+WorkingDirectory=/var/www/joinmask/current
+
+ExecStart=/home/smo3/.asdf/shims/puma -C /var/www/joinmask/current/config/puma.rb
+
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=joinmask
+
+[Install]
+WantedBy=multi-user.target
