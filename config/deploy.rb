@@ -15,6 +15,8 @@ set :asdf_ruby_version, '3.2.2'
 
 
 namespace :deploy do
+  after :updated, 'bundler:install'
+
   desc 'Upload shared files to server'
   task :upload_shared do
     on roles(:app) do
@@ -29,4 +31,13 @@ namespace :deploy do
   # перед проверкой linked_files – закачаем их
   before 'deploy:check:linked_files', 'deploy:upload_shared'
   after :finishing, 'deploy:cleanup'
+  after :publishing, :restart
+
+  desc 'Restart application via systemd'
+  task :restart do
+    on roles(:app) do
+      # команда возьмёт puma из шимов asdf (см. linked_bins)
+      execute :sudo, :systemctl, :restart, 'joinmask'
+    end
+  end
 end
