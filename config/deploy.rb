@@ -16,11 +16,6 @@ set :linked_files, fetch(:linked_files, []).push('.env')
 set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/sockets', 'public/system')
 set :keep_releases, 5
 
-# # Настройка asdf
-# set :asdf_map_bins, %w[ruby bundle puma]
-# set :asdf_type, :user
-# set :asdf_ruby_version, '3.2.2'
-
 set :default_env, {
   PATH: "/home/smo3/.asdf/shims:/home/smo3/.asdf/bin:#{ENV['PATH']}"
 }
@@ -31,11 +26,7 @@ namespace :deploy do
     on roles(:app) do
       within release_path do
         # используем asdf exec bundle install
-        execute :asdf, 'exec', 'bundle', 'install',
-                "--jobs=4",               # параллельных джобов
-                "--path", shared_path.join('bundle').to_s,
-                "--without", 'development test',
-                "--deployment"
+        execute :asdf, 'exec', 'bundle', 'install'
       end
     end
   end
