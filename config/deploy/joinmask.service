@@ -13,7 +13,7 @@ User=smo3
 EnvironmentFile=/var/www/joinmask/shared/.env
 WorkingDirectory=/var/www/joinmask/current
 
-ExecStart=/home/smo3/.asdf/shims/puma -C /var/www/joinmask/current/config/puma.rb
+ExecStart=/bin/bash -lc 'bundle exec puma -C config/puma.rb'
 
 Restart=always
 RestartSec=5
