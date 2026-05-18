@@ -145,8 +145,11 @@
   </div>
 
   <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
+    let tg = null;
+    try {
+      tg = window.Telegram?.WebApp ?? null;
+      if (tg) { tg.ready(); tg.expand(); }
+    } catch (e) { tg = null; }
 
     let currentResult = '';
 
@@ -162,27 +165,47 @@
       document.getElementById('result-section').classList.add('visible');
       document.getElementById('copy-feedback').textContent = '';
 
-      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
     }
 
     function copyResult() {
       if (!currentResult) return;
-      navigator.clipboard.writeText(currentResult).then(() => {
+
+      const showCopied = () => {
         const el = document.getElementById('copy-feedback');
         el.textContent = 'Скопировано!';
         setTimeout(() => { el.textContent = ''; }, 2000);
-        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-      });
+        try { tg?.HapticFeedback?.impactOccurred('light'); } catch (e) {}
+      };
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(currentResult).then(showCopied).catch(() => fallbackCopy());
+      } else {
+        fallbackCopy();
+      }
+    }
+
+    function fallbackCopy() {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = currentResult;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const el = document.getElementById('copy-feedback');
+        el.textContent = 'Скопировано!';
+        setTimeout(() => { el.textContent = ''; }, 2000);
+      } catch (e) {}
     }
 
     function openShowcase() {
       if (!currentResult) return;
       const url = 'http://smo3-master-2.local/tasks?filter=' + encodeURIComponent(currentResult) + '&commit=Filter';
-      if (tg) {
-        tg.openLink(url);
-      } else {
-        window.open(url, '_blank');
-      }
+      try {
+        if (tg?.openLink) { tg.openLink(url); } else { window.open(url, '_blank'); }
+      } catch (e) { window.open(url, '_blank'); }
     }
   </script>
 </body>
