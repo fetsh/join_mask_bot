@@ -148,7 +148,13 @@
     let tg = null;
     try {
       tg = window.Telegram?.WebApp ?? null;
-      if (tg) { tg.ready(); tg.expand(); }
+      if (tg) {
+        tg.ready();
+        // expand() crashes Telegram Desktop WebView — mobile only
+        if (tg.platform && !['tdesktop', 'macos', 'weba', 'webk'].includes(tg.platform)) {
+          tg.expand();
+        }
+      }
     } catch (e) { tg = null; }
 
     let currentResult = '';
