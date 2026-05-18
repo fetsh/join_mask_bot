@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>JoinMask</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: var(--tg-theme-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #000000);
+      --hint: var(--tg-theme-hint-color, #8e8e93);
+      --link: var(--tg-theme-link-color, #2481cc);
+      --btn-bg: var(--tg-theme-button-color, #2481cc);
+      --btn-text: var(--tg-theme-button-text-color, #ffffff);
+      --secondary-bg: var(--tg-theme-secondary-bg-color, #f2f2f7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px 16px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--hint);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px;
+      border: 1.5px solid var(--secondary-bg);
+      border-radius: 10px;
+      background: var(--secondary-bg);
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus {
+      border-color: var(--btn-bg);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:active { opacity: 0.8; }
+
+    .result-section { display: none; }
+    .result-section.visible { display: block; }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--hint);
+      margin-bottom: 8px;
+    }
+
+    .result-box {
+      background: var(--secondary-bg);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-all;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 11px;
+      background: transparent;
+      color: var(--link);
+      border: 1.5px solid var(--link);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-secondary:active { opacity: 0.7; }
+
+    .copy-feedback {
+      text-align: center;
+      font-size: 13px;
+      color: var(--hint);
+      margin-top: 10px;
+      height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>JoinMask</h1>
+  <p class="hint">Вставь список — разделители (пробел, запятая, палочка, перенос строки) будут заменены на <code>|</code>, дубли убраны.</p>
+
+  <textarea id="input" placeholder="apple, banana&#10;cherry|durian&#10;apple"></textarea>
+  <button class="btn-primary" onclick="convert()">Конвертировать</button>
+
+  <div class="result-section" id="result-section">
+    <div class="result-label">Результат</div>
+    <div class="result-box" id="result-box"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="copyResult()">Копировать</button>
+      <button class="btn-secondary" onclick="openShowcase()">Showcase</button>
+    </div>
+    <div class="copy-feedback" id="copy-feedback"></div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    let currentResult = '';
+
+    function convert() {
+      const raw = document.getElementById('input').value.trim();
+      if (!raw) return;
+
+      const parts = raw.split(/[\s,|]+/).map(s => s.trim()).filter(Boolean);
+      const unique = [...new Set(parts)];
+      currentResult = unique.join('|');
+
+      document.getElementById('result-box').textContent = currentResult;
+      document.getElementById('result-section').classList.add('visible');
+      document.getElementById('copy-feedback').textContent = '';
+
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    function copyResult() {
+      if (!currentResult) return;
+      navigator.clipboard.writeText(currentResult).then(() => {
+        const el = document.getElementById('copy-feedback');
+        el.textContent = 'Скопировано!';
+        setTimeout(() => { el.textContent = ''; }, 2000);
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      });
+    }
+
+    function openShowcase() {
+      if (!currentResult) return;
+      const url = 'http://smo3-master-2.local/tasks?filter=' + encodeURIComponent(currentResult) + '&commit=Filter';
+      if (tg) {
+        tg.openLink(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    }
+  </script>
+</body>
+</html>
